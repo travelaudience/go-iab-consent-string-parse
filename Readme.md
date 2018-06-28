@@ -23,4 +23,5 @@ See specification here: [GDPR Transparency & Consent Framework](https://github.c
     
     	fmt.Println(parser.IsVendorAllowed(99))
     	fmt.Println(parser.IsPurposeAllowed(1))
+    	fmt.Println(parser.ArePurposesAllowed([]int{1,2,3,4,5}))
     }
