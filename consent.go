@@ -82,6 +82,7 @@ func NewUserConsent(c string) (UserConsent, error) {
 	updated := b.getInt(updatedBitOffset, updatedBitSize)
 	uc.ConsentRecordLastUpdated = time.Unix(int64(updated)/10, 0)
 
+	uc.purposes = make([]bool, 0, purposesSize)
 	for i, ii := purposesOffest, purposesOffest+purposesSize; i < ii; i++ {
 		uc.purposes = append(uc.purposes, b.getBit(i))
 	}
@@ -90,6 +91,7 @@ func NewUserConsent(c string) (UserConsent, error) {
 		uc.defaultConsent = b.getBit(defaultConsentOffset)
 		numEntries := b.getInt(numEntriesOffset, numEntriesSize)
 		currentOffset := rangeEntryOffset
+		uc.rangeEntries = make([]RangeEntry, 0, numEntries)
 		for i := 0; i < numEntries; i++ {
 			rng := b.getBit(currentOffset)
 			currentOffset++
@@ -197,10 +199,10 @@ func (b *bits) getSixBitString(startInclusive, size int) string {
 		return ""
 	}
 	charNum := size / 6
-	var str []rune
+	str := make([]rune, charNum)
 	for i := 0; i < charNum; i++ {
 		charCode := b.getInt(startInclusive+(i*6), 6) + 65
-		str = append(str, rune(charCode))
+		str[i] = rune(charCode)
 	}
 	return string(str)
 
@@ -213,15 +215,19 @@ type RangeEntry struct {
 }
 
 func NewRangeEntry(vendorId int) RangeEntry {
-	r := RangeEntry{}
-	r.vendorIds = append(r.vendorIds, vendorId)
-	r.maxVendorId, r.minVendorId = vendorId, vendorId
-	return r
+	return RangeEntry{
+		vendorIds: []int{vendorId},
+		maxVendorId: vendorId,
+		minVendorId: vendorId,
+	}
 }
 
 func NewRangeEntryWithRange(startId, endId int) RangeEntry {
-	r := RangeEntry{}
-	r.maxVendorId, r.minVendorId = endId, startId
+	r := RangeEntry{
+		vendorIds: make([]int, 0, endId - startId),
+		minVendorId: startId,
+		maxVendorId: endId,
+	}
 
 	for ; startId <= endId; startId++ {
 		r.vendorIds = append(r.vendorIds, startId)
