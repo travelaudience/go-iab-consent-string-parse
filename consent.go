@@ -49,7 +49,7 @@ type UserConsent struct {
 	ConsentLanguage          string
 	VendorListVersion        int
 
-	bits               Bits
+	bits               bits
 	purposes           []bool
 	vendorEncodingType int
 	rangeEntries       []RangeEntry
@@ -63,7 +63,7 @@ func NewUserConsent(c string) (UserConsent, error) {
 		return UserConsent{}, err
 	}
 
-	b := NewBits(res)
+	b := bits{bytes:res}
 	uc := UserConsent{
 		ConsentString:     c,
 		Version:           b.getInt(versionBitOffset, versionBitSize),
@@ -166,19 +166,11 @@ func (uc *UserConsent) findVendorIdInRange(vendorId int) bool {
 	return false
 }
 
-type Bits struct {
-	bytePows []byte
+type bits struct {
 	bytes    []byte
 }
 
-func NewBits(s []byte) Bits {
-	return Bits{
-		bytePows: []byte{128, 64, 32, 16, 8, 4, 2, 1},
-		bytes:    s,
-	}
-}
-
-func (b *Bits) getInt(startInclusive, size int) int {
+func (b *bits) getInt(startInclusive, size int) int {
 	var val int
 	sigMask := 1
 	var sigIndex = uint(size) - 1
@@ -191,17 +183,16 @@ func (b *Bits) getInt(startInclusive, size int) int {
 	}
 	return val
 }
-func (b *Bits) getBit(index int) bool {
+func (b *bits) getBit(index int) bool {
 	byteIndex := index / 8
-	bitExact := index % 8
+	bitOffset := uint(index % 8)
 	if byteIndex >= len(b.bytes) {
 		return false
 	}
-	bb := b.bytes[byteIndex]
-	return (bb & b.bytePows[bitExact]) != 0
+	return (b.bytes[byteIndex] & (0x80 >> bitOffset)) != 0
 }
 
-func (b *Bits) getSixBitString(startInclusive, size int) string {
+func (b *bits) getSixBitString(startInclusive, size int) string {
 	if size%6 != 0 {
 		return ""
 	}

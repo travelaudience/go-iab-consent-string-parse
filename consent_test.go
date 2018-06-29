@@ -137,3 +137,13 @@ func TestNewUserConsent(t *testing.T) {
 		}
 	}
 }
+
+func BenchmarkNewUserConsent(b *testing.B) {
+	for n := 0; n < b.N; n++ {
+		_, err := NewUserConsent("BOO1H6gOPmM_3ABABAENBB-AAAAcR7_______9______9uz_Gv_r_f__3nW8_39P_h_7_O__7m_-zzV48_lrQV1yPA1CiIAAAAAAAAAAAA")
+		if err != nil {
+			b.Error(err)
+			return
+		}
+	}
+}
